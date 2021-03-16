@@ -9,22 +9,56 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## What this is about
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This file covers the initial 'poking and prodding' of a data set (in R, a 'data frame', or 'tibble').
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The initial goals are to figure out the general nature of the data set.  The detailed statistical analyses come later.
 
-```{r cars}
-summary(cars)
+The classic situations are:
+1. You've imported a data set from somewhere else, and you want to see if the import process messed anything up, and 
+2. Somebody handed you an R data frame (already imported), and you want to get an overall sense of what you are dealing with.
+
+#### Library
+
+This file will also serve as a collection of several different methods, which do overlapping tasks.  In some cases, the choice of method is based on what gives the nicest looking output.
+
+
+## Libraries and data sets
+
+The first step is to load the packages and data sets used in this file:
+
+- **janitor**, 
+- **kableExtra** 
+- **inspectdf**
+- **skimr**
+- **tidyverse**
+
+
+```{r libraries, echo=FALSE}
+library(janitor)
+library(kableExtra)
+library(inspectdf)
+library(skimr)
+
+library(tidyverse)
+
 ```
 
-## Including Plots
+#### Data sets:
 
-You can also embed plots, for example:
+- **mtcars**, 
+- **mpg** 
+- **iris**
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+```{r data_sets, echo=FALSE}
+
+data(mtcars)
+data(mpg)
+data(iris)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
