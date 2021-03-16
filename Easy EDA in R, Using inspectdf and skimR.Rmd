@@ -1,0 +1,139 @@
+---
+title: "Easy EDA in R, Using inspectdf and skimR"
+author: "Barry DeCicco"
+date: "For Ann Arbor R Users' Group, June 11, 2020"
+output: 
+  html_document:
+    css: style.css
+    toc: true
+    toc_float: true
+    
+# ioslides_presentation
+---
+
+## What this presentation covers
+<br>
+**This will not be a detailed coverage of EDA, but it will introduce some methods to make it easier. <br><br>This is important because hard EDA tends to be EDA not done.**
+
+<br>
+#### Why Do Exploratory Data Analysis?
+
+- **Make Sure that the import went well**
+- **Find out what data you have - by column**
+- **Find out what data you have - by row**
+
+**The first point is not emphasized, but should be - when importing data sets, it's really easy to have things not be understood correctly by R, resulting in numeric/date variables being read in as strings, or missing value codes not being undersood.**
+
+\newpage
+
+<br>
+## Load libraries: 
+
+- **janitor**, 
+- **kableExtra** 
+- **inspectdf**
+- **skimr**
+- **tidyverse**
+
+\newpage
+```{r setup,  include=FALSE}  
+
+# load libraries as needed:
+
+
+library(janitor)
+library(kableExtra)
+library(inspectdf)
+library(skimr)
+
+library(tidyverse)
+```
+
+<br>
+\newpage
+## Data - Penguins
+**This will use the 'penguins' data set, prepared by Allison Horst (https://github.com/allisonhorst):
+<br>
+https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/data-raw/penguins_raw.csv**
+<br>
+
+**Note that I have not worked with this data set before, so this is actual, gritty, real-life EDA!**
+
+\newpage
+## Import the data set 
+
+**Import the data set from a .csv file on Allison Horts' gitub site:**
+<br>
+```{r import_penguin_data, echo=TRUE}
+df_penguins <- read.csv("https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/data-raw/penguins_raw.csv", header=TRUE, stringsAsFactors=FALSE);
+```
+
+\newpage
+<br>
+<br>
+## Make Sure that the import went well.
+
+- **Is the created object a data frame?**
+- **What are the row/column counts? (what did you expect?)**
+- **What are the column types?  (Numeric/Character/Dates as expected)**
+<br>
+<br>
+
+```{r import_check_quality_1, echo=TRUE}
+options(width = 80)
+
+print(class(df_penguins))
+print(dim(df_penguins))
+
+
+```
+
+## Find the type of each column - this produces a nicer table:
+
+```{r import_check_quality_2, echo=TRUE}
+options(width = 80)
+
+# From:  https://stackoverflow.com/questions/40306280/how-to-transpose-a-dataframe-in-tidyverse
+
+df_column_types <- lapply(df_penguins, class) %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column() %>%  
+  pivot_longer(-rowname) %>% 
+  pivot_wider(names_from=rowname, values_from=value) %>%
+  rename("Column_Name" = "name", "Column_Type" = "1")
+
+
+
+library(gridExtra)
+grid.table(df_column_types)
+
+```
+## Find out what data you have - by column.
+
+
+- **List unique values and counts for each column**
+- **List missing value counts**
+
+#### Skimr selects the appropriate summaries for character variables:
+
+```{r skimr_character, echo=TRUE}
+
+ df_penguins %>%  
+  dplyr::select_if(is.character) %>% 
+  skim()
+
+
+
+```
+
+
+
+## Skimr selects the appropriate summaries for numeric variables:
+
+```{r skimr_numeric, echo=TRUE}
+
+df_penguins %>%  
+  dplyr::select_if(is.numeric) %>% 
+  skim()
+
+```
