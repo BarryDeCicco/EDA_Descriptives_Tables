@@ -32,6 +32,10 @@ The first step is to load the packages and data sets used in this file:
 - **kableExtra** 
 - **inspectdf**
 - **skimr**
+- **magrittr**
+- **gridExtra**   # for a grid layouts
+- **DataExplorer**
+- **htmltools**   # for inspectdf plots
 - **tidyverse**
 
 
@@ -40,6 +44,13 @@ library(janitor)
 library(kableExtra)
 library(inspectdf)
 library(skimr)
+library(magrittr)
+library(gridExtra)
+library(DataExplorer)
+# if you can not install 'DataExplorer' in the normal way, pull it from github:
+# devtools::install_github("boxuancui/DataExplorer")
+#  install.packages("htmltools") run the first time you run this script.
+library(htmltools)
 
 library(tidyverse)
 
@@ -61,4 +72,218 @@ data(iris)
 ```
 
 
+## Why Do Exploratory Data Analysis?
 
+- **Make Sure that the import went well**
+- **Find out what data you have - by column**
+- **Find out what data you have - by row**
+
+**The first point is not emphasized, but should be - when importing data sets, it's really easy to have things not be understood correctly by R, resulting in numeric/date variables being read in as strings, or missing value codes not being understood.**
+
+
+#### Make Sure that the import went well.
+
+- **Is the created object a data frame?**
+- **What are the row/column counts? (what did you expect?)**
+- **What are the column types?  (Numeric/Character/Dates as expected)**
+<br>
+<br>
+```{r Class_Dimension, echo=TRUE}
+
+print(class(mpg))
+print(dim(mpg))
+
+```
+Find out what the columns are like:
+
+```{r Column_types, echo=TRUE}
+
+names(mpg)
+str(mpg)
+```
+
+Glimpse:  use the glimpse() command to get another look at the data set.  This is more compact than str(), but with less data.
+
+```{r glimpse, echo=TRUE}
+
+glimpse(mpg)
+
+
+```
+
+
+Get a list of the types (classes) of each column in a nicer arrangement:
+
+```{r Column_Types_Better, echo=TRUE}
+
+options(width = 80)
+
+# From:  https://stackoverflow.com/questions/40306280/how-to-transpose-a-dataframe-in-tidyverse
+
+df_column_types <- lapply(mpg, class) %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column() %>%  
+  pivot_longer(-rowname) %>% 
+  pivot_wider(names_from=rowname, values_from=value) %>%
+  rename("Column_Name" = "name", "Column_Type" = "1")
+
+
+grid.table(df_column_types)
+```
+
+#### Summaries within columns
+
+When you want to see things by column:
+1. Summary statistics for numeric data.
+2. How many unique values are in each column?
+3. How many missing values are in each column?
+
+```{r Summary_1, echo=TRUE}
+
+summary_df <- summary(mpg)  %>% as.data.frame()
+
+summary_df
+
+```
+Unique values by column - the lapply function
+will go over the columns of the first argument
+(the data frame 'mpg') and apply the function given in the second argument ('unique')
+
+```{r Summary_2, echo=TRUE}
+
+ lapply(mpg, unique) 
+
+
+```
+Missing values - you want to know how many
+missing values are in each column.  
+
+R uses the 'NA' symbol to mean 'missing'.
+It is not the actual letters 'NA', but rather
+a symbol. This method uses the package 
+'purr', from the tidyverse, to 'map' a function across the columns.
+
+The function used is an improvised function, which applies the standard function 'is.na()'
+to each element of the column, then sums them.
+is.na() returns TRUE/FALSE for each elment;
+when they are summed:
+  TRUE is evaluated as 1;
+  FALSE is evaluated as 0.
+
+```{r Summary_3, echo=TRUE}
+
+# from:  https://sebastiansauer.github.io/sum-isna/   'Way 2: using purrr:map'
+
+missing_counts_by_column <- map(mpg,
+                           ~sum(is.na(.))) %>% 
+              as.data.frame()
+
+missing_counts_by_column
+
+```
+
+Counting missing values by row.
+Sometimes you want to track missing values 
+by row of the data frame.
+
+this uses the apply function, with a 'MARGIN'
+argument to cause the application to be by rows.  'MARGIN=2' would apply the function by columns, producing a by-column count as in the previous example.
+
+
+```{r Summary_4, echo=TRUE}
+
+# from:  https://sebastiansauer.github.io/sum-isna/   'Way 4: Counting NAs rowwise using apply'
+
+missing_counts_by_row <-apply(mtcars, 
+              MARGIN = 1,
+              function(x) sum(is.na(x)))   %>% 
+          as.data.frame()
+
+
+missing_counts_by_row 
+
+```
+
+
+## Using packages for EDA
+
+### skimr  
+(https://cran.r-project.org/web/packages/skimr/vignettes/skimr.html)
+
+This is the first pacakage that we'll look at.
+Think of skimr as a collection of useful functions.  One of those is to produce summaries.  Skimr produces different summaries for character and numeric columns, so its 
+convenient to run it separately.  We will use
+functions from the dplyr package to split
+the mpg data sets into the subsets of character and numeric columns, and run skimr on each.
+
+Skimr selects the appropriate summaries for character variables:
+
+```{r skimr_character, echo=TRUE}
+
+ mpg %>%  
+  dplyr::select_if(is.character) %>% 
+  skim()
+
+
+
+```
+
+Skimr selects the appropriate summaries for numeric variables:
+
+```{r skimr_numeric, echo=TRUE}
+
+mpg %>%  
+  dplyr::select_if(is.numeric) %>% 
+  skim()
+
+```
+
+
+
+```{r Summary_5, echo=TRUE}
+
+ mpg %>%  
+  dplyr::select_if(is.character) %>% 
+  skim()
+
+
+```
+
+#### DataExplorer
+(https://www.littlemissdata.com/blog/simple-eda)
+
+This package runs a full report, in a new html document, covering a long list of items.
+
+```{r create_report, echo=TRUE}
+DataExplorer::create_report(mpg)
+
+```
+
+#### inspectdf
+(https://www.rdocumentation.org/packages/inspectdf/versions/0.0.9.
+https://www.littlemissdata.com/blog/inspectdf)
+
+
+This package, like skimr, has a collection of functions which specialize in one task:
+
+* inspect_na:  Summary and comparison of the rate of missingness across dataframe columns
+* inspect_imb:  Summary and comparison of the most common levels in categorical columns
+* inspect_cat:  Summary and comparison of the levels in categorical columns
+* show_plot 	Simple graphical inspection of dataframe summaries
+* inspect_types:  Summary and comparison of column types
+* inspect_num:  Summary and comparison of numeric columns
+
+Only two functions will be illustrated:
+inspect_cat() and inspect_ibm(), both of which examine categorical variables.
+
+```{r inspect_cat, echo=TRUE}
+
+inspectdf::inspect_cat(mpg)
+
+```
+
+```{r inspect_imb, echo=TRUE}
+
+inspectdf::inspect_imb(mpg)
+
+```
