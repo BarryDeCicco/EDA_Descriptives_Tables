@@ -9,22 +9,157 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Source Files
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This material was drawn from the following websites:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+https://readr.tidyverse.org/
+A data import cheat sheet is at:
 
-```{r cars}
-summary(cars)
+https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf
+
+https://cran.r-project.org/web/packages/readr/vignettes/readr.html
+
+https://readr.tidyverse.org/reference/parse_datetime.html  (dealing with dates and times)
+
+R for Data Science book:
+https://r4ds.had.co.nz/data-import.html
+
+## Library Set Up:
+
+## Libraries and data sets
+
+The first step is to load the packages and data sets used in this file:
+
+
+- **magrittr**
+- **tidyverse**   # we want the readr package in it.
+
+
+```{r libraries, echo=FALSE}
+
+
+library(tidyverse)
+
 ```
 
-## Including Plots
+#### Functions in readr:
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+1. read_csv(): comma separated (CSV) files
+2. read_tsv(): tab separated files
+3. read_delim(): general delimited files
+4. read_fwf(): fixed width files
+5. read_table(): tabular files where columns are separated by white-space.
+6. read_log(): web log files
+
+Most of the time, read_csv() will be used.
+
+## Accessing a built-in file:
+
+The .csv file 'mtcars.csv' is included when readr
+is loaded, and can be accessed with the function 'readr_example()'
+
+```{r read_built_in, echo=TRUE}
+mtcars <- read_csv(readr_example("mtcars.csv"))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#### Specifications
+
+When readr is run, it prints out the column specification, listing what type of data
+that readr thought was in each column.
+
+This can be copied and pasted, with alterations as desired, when the default column types need to be overridden.  In this case, 'cyl' and 'hp' are set to be integers.  The advantage of doing this is that readr will always use the same column types when importing a given data set; otherwise this might changes over versions of the data.
+
+```{r read_built_in, echo=TRUE}
+mtcars <- read_csv(readr_example("mtcars.csv"),
+  col_types = cols(
+  mpg = col_double(),
+  cyl = col_integer(),
+  disp = col_double(),
+  hp = col_integer(),
+  drat = col_double(),
+  wt = col_double(),
+  qsec = col_double(),
+  vs = col_double(),
+  am = col_double(),
+  gear = col_double(),
+  carb = col_double()
+  )
+)
+```
+
+There are a variety of column specifications, such as col_logical(), col_character(), etc.  They also have **parsers**, which specify how to read each values.  This is especially important when reading in **dates**, which can have very different formats.  
+
+This will be done on the next example, which is about how to import a .csv from the PC (or network drive).
+
+#### Importing a .csv file from the computer.
+
+The first thing to know is that R uses '/' where Windows uses '\'.  This means that when copying and pasting file paths, a search and replace needs to be done.
+
+In this case, options are used:
+- R will read the variable (column) names from the first row in the file.
+- R will not alter character (string) data into factors.  Factors will be covered much later.
+
+```{r read_dates, echo=TRUE}
+
+patientsandlab <- read_csv("Data/patientsandlab.csv")
+
+str(patientsandlab)
+```
+
+From the structure command and the column specifications, the dates were brought in as character variables, because readr wasn't sure how to parse them.
+
+The column specifcations can be copied into the original command, and altered:
+
+```{r read_dates_2, echo=TRUE}
+
+patientsandlab <- read_csv("Data/patientsandlab.csv",
+      col_types=cols(
+  .default = col_double(),
+  date.birth = col_date(),
+  date.entry = col_date(),
+  sex.f = col_character(),
+  group.f = col_character(),
+  bmi3 = col_character()
+     )
+  )
+
+str(patientsandlab)
+```
+Again, the dates are not read correctly.
+From the data import section of R for Data Science (R4DS):
+https://r4ds.had.co.nz/data-import.html, there is are date codes 
+(see 'If these defaults don’t work for your data ...')
+
+Taking the first date values, it looks like:
+parse_date("4/2/1930", "%m/%d/%Y") works, 
+when experimenting in the console.  Trying a date with a 2-digit month also works.
+
+```{r read_dates_3, echo=TRUE}
+
+patientsandlab <- read_csv("Data/patientsandlab.csv",
+      col_types=cols(
+  .default = col_double(),
+  date.birth = col_date("%m/%d/%Y"),
+  date.entry = col_date("%m/%d/%Y"),
+  sex.f = col_character(),
+  group.f = col_character(),
+  bmi3 = col_character()
+     )
+  )
+
+str(patientsandlab)
+```
+
+The structure command, str(), shows the the two dates are treated as dates.   The 'unique()' command lists the values, and the sum(is.na()) command will count the missing values:
+
+```{r read_dates_3, echo=TRUE}
+
+unique(patientsandlab$date.birth)
+unique(patientsandlab$date.entry)
+sum(is.na(patientsandlab$date.birth))
+sum(is.na(patientsandlab$date.entry))
+```
+
+When dealing with trickier combinations, experimenting in the console is really really a timesaver.
