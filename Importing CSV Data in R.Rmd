@@ -152,14 +152,22 @@ patientsandlab <- read_csv("Data/patientsandlab.csv",
 str(patientsandlab)
 ```
 
-The structure command, str(), shows the the two dates are treated as dates.   The 'unique()' command lists the values, and the sum(is.na()) command will count the missing values:
+The structure command, str(), shows the the two dates are treated as dates.   The 'unique()' command lists the values, and the sum(is.na()) command will count the missing values.
+
+The summary() command gives results in the form of dates, which means that the column is in date format.
+
+The class() command also does this.
 
 ```{r read_dates_3, echo=TRUE}
 
-unique(patientsandlab$date.birth)
-unique(patientsandlab$date.entry)
+summary(patientsandlab$date.birth)
+summary(patientsandlab$date.entry)
 sum(is.na(patientsandlab$date.birth))
 sum(is.na(patientsandlab$date.entry))
+class()
+unique(patientsandlab$date.birth)
+unique(patientsandlab$date.entry)
+
 ```
 
 When dealing with trickier combinations, experimenting in the console is really really a timesaver.
