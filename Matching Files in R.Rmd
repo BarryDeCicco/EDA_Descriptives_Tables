@@ -1,0 +1,172 @@
+---
+title: "Matching Files in R"
+author: "Barry DeCicco"
+date: "3/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Source files:
+https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/merge
+
+https://www.infoworld.com/article/3454356/how-to-merge-data-in-r-using-r-merge-dplyr-or-datatable.html
+
+
+## Matching files in R
+
+'Matching files' here means joining files sideways, row by row.  This could be done
+by assuming that row X in file one is matched by row x in file 2, but that is a very, very risky assumption, and is almost never done.
+
+#### Keys
+
+Files are almost always joined by matching values of a *key column* which is common to both files.  These are also called:
+
+- Key fields
+- Keys
+- Unique ID
+- ID 
+- Identifier.
+
+The standard requirements are also that the key columns be the same *type* in both columns:
+- Numeric to numeric.
+- String (character) to string.
+
+For the latter, things are more complicated.  The columns must be of the same width, and differing cases will cause problems ('Barry' and 'barry' and 'BARRY' are not the same).
+
+The width matters because software frequently pads columns.  In this case, the data sets were set up for merging.
+
+
+## Libraries and data sets
+
+The first step is to load the packages and data sets used in this file:
+
+- **janitor**, 
+- **kableExtra** 
+- **magrittr**
+- **tidyverse**
+
+
+```{r libraries, echo=FALSE}
+library(janitor)
+library(kableExtra)
+library(magrittr)
+library(tidyverse)
+
+```
+
+The data sets are from the package 'nycflights13', which contains data about flights in an out of NYC for CY 2013 (https://github.com/hadley/nycflights13).  They have already been imported into R data sets (*.rda): 
+
+- **airlines** 
+- **airports** 
+- **planes**
+- **weather**
+- **flights**
+
+```{r data_sets, echo=FALSE}
+
+load("~/R Studio Projects/EDA_Descriptives_Tables/Data/nycflights13/airlines.rda")
+
+load("~/R Studio Projects/EDA_Descriptives_Tables/Data/nycflights13/airports.rda")
+
+load("~/R Studio Projects/EDA_Descriptives_Tables/Data/nycflights13/planes.rda")
+
+load("~/R Studio Projects/EDA_Descriptives_Tables/Data/nycflights13/weather.rda")
+
+load("~/R Studio Projects/EDA_Descriptives_Tables/Data/nycflights13/flights.rda")
+```
+
+
+## Nomenclature
+
+Classically merges and joins are defined by SQL terms.  For two files file1, file2
+
+
+
+- Inner join:  all rows from each which have matching key field values (the overlap between two sets).
+- Left join:  all rows from file1 are included, and only matching rows from file2.
+- Right join:  (swap file1 and file2).
+- Full join:  all rows from both files are included.  For rows in file1 with no match, the values for columns from file2 are set to NA (missing), and vice versa.
+- Outer join:  Rows from both files are brought in, *if they have no match*.  This is a way of finding out what does not match.
+
+![Join types as Venn Diagrams](images\sql-joins.png)
+
+ ![Join types as Venn Diagrams, the sequel](images\dyqnzpuddxk21.png)
+
+
+## First method - the merge function.
+
+Base R has a merge() function 
+https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/merge
+
+It's default method is an *inner join*:
+flights had 336,776 rows, planes had 3,322 rows; the merged data set 'df_inner_join' has 284,170 rows.  Only rows from 'flights' whose 'tailnum' value was also in 'planes' were included.
+
+In the inner join case, rows were probably missing for two reasons:
+
+- a missing tailnum value in 'flights'
+- a tailnum value was present 'flights', but not matched in any rows in 'planes'.
+
+
+
+
+```{r merge1}
+df_inner_join <- merge(flights, planes, by.x="tailnum", by.y="tailnum")
+
+dim(flights)
+dim(planes)
+dim(df_inner_join)
+```
+
+Columns:  df_inner_join has one less column than the sum of the two source data sets.  The default is to retain the columns from both data sets, and to label columns with duplicate names 'columname.x' or 'columnamename.y', to keep track of their source data set.  In this case, there was one repeated column name, 'year'.
+
+By default, the key field/column ('tailnum') is not repeated. 
+
+```{r colnames, echo=TRUE}
+names(flights)
+
+names(planes) 
+names(df_inner_join)
+
+```
+
+#### Left join
+
+Adding 'all.x=TRUE' will keep all of the rows of 'flights', and bring in rows from 'planes' which match.  This is a **left join**:
+
+```{r merge2, echo=TRUE}
+
+df_left_join <- merge(flights, planes, by.x="tailnum", by.y="tailnum", all.x=TRUE)
+
+dim(df_left_join)
+```
+#### Checking
+
+A match not checked is a match gone wrong.
+Check for missing values in columns for both files and the resulting merged file.
+Start with key values/columns:  for example, there's no guarantee that key fields will be present for all columns.
+
+In this case, 2,512 rows of the 'flights' data set had 
+
+
+```{r merge3, echo=TRUE}
+
+sum(is.na(flights$tailnum))
+sum(is.na(planes$tailnum))
+
+```
+
+This code takes the 'flights' data set, pipes it through the dplyr::filter function, and filters by missing tailnum values: is.na(tailnum) returns TRUE if tailnum is missing (coded 'NA', in R):
+
+```{r find_missing_tailnum, echo=TRUE}
+
+flights_missing_tailnum <-flights %>% dplyr::filter(is.na(tailnum))
+
+dim(flights_missing_tailnum)
+
+
+
+```
+
