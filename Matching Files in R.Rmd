@@ -14,13 +14,16 @@ https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/merge
 
 https://www.infoworld.com/article/3454356/how-to-merge-data-in-r-using-r-merge-dplyr-or-datatable.html
 
+https://r4ds.had.co.nz/relational-data.html
+
+https://dplyr.tidyverse.org/reference/join.html
 
 ## Matching files in R
 
 'Matching files' here means joining files sideways, row by row.  This could be done
 by assuming that row X in file one is matched by row x in file 2, but that is a very, very risky assumption, and is almost never done.
 
-#### Keys
+#### Keys ----
 
 Files are almost always joined by matching values of a *key column* which is common to both files.  These are also called:
 
@@ -30,7 +33,7 @@ Files are almost always joined by matching values of a *key column* which is com
 - ID 
 - Identifier.
 
-The standard requirements are also that the key columns be the same *type* in both columns:
+The standard requirements are also that the key columns be the same *type* in both data frames:
 - Numeric to numeric.
 - String (character) to string.
 
@@ -38,8 +41,14 @@ For the latter, things are more complicated.  The columns must be of the same wi
 
 The width matters because software frequently pads columns.  In this case, the data sets were set up for merging.
 
+#### Primary and Foreign Keys ----
 
-## Libraries and data sets
+If a column conains unique identifying information in a data frame, then it is called a **primary key**.  The requirement is that it exists for all rows, and is unique (no duplicates).
+
+If a column conains unique identifying information for another data frame, then it is called a **foreign key key**.  It no longer has to be unique, since multiple rows in one data frame might link to a single row in another data frame.  In the nycflights13 package, 'tailnum' is a primary key in the 'planes' data frame, and is a foreign key in the 'flights' data set.  It would be good to have no missing values for a foreign key, but this doesn't always happen.
+
+
+## Libraries and data sets ----
 
 The first step is to load the packages and data sets used in this file:
 
@@ -96,7 +105,7 @@ Classically merges and joins are defined by SQL terms.  For two files file1, fil
  ![Join types as Venn Diagrams, the sequel](images\dyqnzpuddxk21.png)
 
 
-## First method - the merge function.
+## First method - the merge function ----
 
 Base R has a merge() function 
 https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/merge
@@ -132,7 +141,7 @@ names(df_inner_join)
 
 ```
 
-#### Left join
+#### Left join ---- 
 
 Adding 'all.x=TRUE' will keep all of the rows of 'flights', and bring in rows from 'planes' which match.  This is a **left join**:
 
@@ -142,7 +151,7 @@ df_left_join <- merge(flights, planes, by.x="tailnum", by.y="tailnum", all.x=TRU
 
 dim(df_left_join)
 ```
-#### Checking
+#### Checking ----
 
 A match not checked is a match gone wrong.
 Check for missing values in columns for both files and the resulting merged file.
@@ -169,4 +178,37 @@ dim(flights_missing_tailnum)
 
 
 ```
+## Tidyverse method ----
+https://r4ds.had.co.nz/relational-data.html
+
+https://dplyr.tidyverse.org/reference/join.html
+
+The improved method is to use the dplyr package from the tidyverse.  it has a set of functions:
+
+- inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),
+  ...)
+
+- left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),
+  ...)
+
+- full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- semi_join(x, y, by = NULL, copy = FALSE, ...)
+
+- nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL,
+  ...)
+
+- anti_join(x, y, by = NULL, copy = FALSE, ...)
+
+These are divided into:
+
+- Mutating joins, which combine variables from both data frames ('tables')
+
+- Filtering joins which keep all cases from the first (left hand) table, and pull in only matching rows from the second (right hand) table.
+
+- Nesting joins, which pull in sets of rows from the second table, and form mini-tables ('list columns') in left hand table.  
+
+#### Default keys
 

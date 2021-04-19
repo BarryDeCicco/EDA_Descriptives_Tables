@@ -1,0 +1,175 @@
+---
+title: "Tables in R"
+author: "Barry DeCicco"
+date: "4/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Tables in R
+
+This document shows the basics of making tables in R.
+It starts with the basic methodds, which produce crude looking results, and then works upwards to better looking tables.
+
+
+The first step is to load the packages and data sets used in this file:
+
+- **janitor**, 
+- **kableExtra** 
+- **inspectdf**
+- **skimr**
+- **magrittr**
+- **gridExtra**   # for a grid layouts
+- **DataExplorer**
+- **htmltools**   # for inspectdf plots
+- **tidyverse**
+
+
+```{r libraries, echo=FALSE}
+library(janitor)
+library(kableExtra)
+library(inspectdf)
+library(skimr)
+library(magrittr)
+library(gridExtra)
+
+# if you can not install 'DataExplorer' in the normal way, pull it from github:
+# devtools::install_github("boxuancui/DataExplorer")
+#  install.packages("htmltools") run the first time you run this script.
+library(htmltools)
+
+library(tidyverse)
+
+```
+
+
+#### Data sets.  This uses some build-in data sets.
+You can change to your own by substituting your data set name and the appropriate column names in the commands below.
+
+- **mtcars**, 
+- **mpg** 
+- **iris**
+
+
+```{r data_sets, echo=FALSE}
+
+data(mtcars)
+data(mpg)
+data(iris)
+
+```
+
+
+
+
+## Tables
+
+#### Basic table using the **table()** command.  
+
+The default is not to show missing values, so add the option useNA = ifany".
+
+Using two columns produces a two-way table;
+Usinging three columns produces a three-way table.
+
+The order is:  row variable, column variable, 
+page variable.
+
+```{r table1, echo=TRUE}
+
+table(mtcars$cyl, useNA = "ifany")
+
+table(mtcars$cyl, mtcars$gear, useNA = "ifany")
+table(mtcars$cyl,mtcars$cyl,mtcars$carb, useNA = "ifany")
+```
+
+#### Proportions using the **prop.table()** command:
+
+This command will take a table, and compute the proportions.  The ' %>%' is a pipe, which feeds the results of the line.  The round() command rounds it to the number of decimals which you specify.
+
+(the '.' in the round command is just a placeholder, because you are using it in a pipe)
+
+
+```{r table2, echo=TRUE}
+
+table(mtcars$cyl, mtcars$gear, useNA = "ifany") %>% 
+  prop.table() %>% 
+  round(.,2)
+
+```
+
+Simplifying it a bit - you con't need to keep rewriting the data set name.  You can use another type of pipe ( %$%) or the 'with()' command.
+
+```{r empty}
+
+
+with(mtcars, table(cyl, gear, useNA = "ifany"))
+
+mtcars %$% 
+  table(cyl, gear, useNA = "ifany") %>% 
+  prop.table() %>% 
+  round(.,2)
+
+```
+#### Using the **tabyl()** function from the Janitor package  (and the %>% pipe).  The tabyl package has an **adorn** command to add features.  The adorn functions are almost self-explanatory.
+
+```{r tabyl1}
+
+
+mtcars %>% 
+  janitor::tabyl(cyl, gear) 
+
+mtcars %>% 
+  janitor::tabyl(cyl, gear) %>% 
+  adorn_totals("row") %>% 
+  adorn_totals("col") %>% 
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns()
+
+```
+
+#### The kableExtra packages will  make tables look much better.  They also come with styling options.
+
+kbl(caption = "Recreating booktabs style table") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+
+
+```{r KableExta1}
+
+
+T1 <- mtcars %>% 
+  janitor::tabyl(cyl, gear) 
+
+  kableExtra::kbl(T1)
+
+T2 <- mtcars %>% 
+  janitor::tabyl(cyl, gear) %>% 
+  adorn_totals("row") %>% 
+  adorn_totals("col") %>% 
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns() 
+
+  kbl(T2) %>% 
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = F)
+
+  
+
+
+```
+
+
+## References:
+
+https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html
+
+https://bookdown.org/kdonovan125/ibis_data_analysis_r4/working-with-tables-in-r.html
+
+https://cran.r-project.org/web/packages/janitor/vignettes/tabyls.html
+
+https://stackoverflow.com/questions/44528173/using-table-in-dplyr-chain
