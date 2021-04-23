@@ -1,0 +1,35 @@
+---
+title: "Sourcing Files"
+author: "Barry DeCicco"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_libraries, include=FALSE}
+library(tidyverse)
+library(magrittr)
+library(here)
+```
+
+#### This file demonstrates how to source another file, calling to be run in another file, which creates a data set 'df', and prints it.
+
+
+```{r source1}
+source("File to be sourced.R")
+```
+
+#### Note that the contents of the file are not displayed!
+
+
+#### Checking the data set:
+
+
+
+```{r summarise_df}
+summary(df)
+```
+
