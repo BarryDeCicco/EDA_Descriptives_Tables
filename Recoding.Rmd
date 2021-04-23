@@ -1,0 +1,121 @@
+---
+title: "Recoding"
+author: "Barry DeCicco"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load_libraries}
+library(tidyverse)
+library(magrittr)
+```
+
+
+## Recoding variables
+
+In the tidyverse, the **dplyr** package is used for a lot of 
+'data wrangling' tasks, such as creating new variables.
+
+
+```{r create_data}
+Mother <- c(0,0,0,1,1,NA)
+Father <- c(0,1,1,0,0,1)
+df <- data.frame(Mother, Father)
+df
+str(df) #both Mother and Father columns are numeric
+
+```
+
+## Mutate
+
+With dply's **mutate** function, you can create new variables, or modify old ones:
+
+```{r mutate1}
+
+df <- df %>% 
+  dplyr::mutate(combined = Mother + Father)
+
+df
+```
+## Mutate - summarise
+
+With dply's **mutate** function, and the summarise function,
+you can create summary variables:
+
+```{r mutate2}
+
+df <- df %>% 
+  dplyr::mutate(mean_combined = mean(combined))
+
+df
+```
+
+#### Propagation of missing values:
+
+NA's (missing values) **propagate**, meaning that functions will return NA if any of the values are NA.
+```{r mutate3}
+
+df <- df %>% 
+  dplyr::mutate(mean_combined = mean(combined, na.rm=TRUE))
+
+df
+```
+
+
+#### Recoding into New Variables:
+
+Recoding variables is very common, and the **case_when** statement offers a simple method of doing this (in place of IF-ELSE statements inside of each other).  Below is an example of 
+
+```{r case_when1}
+
+df <- df %>% 
+  mutate(new_variable = case_when(
+    Mother == 0 & Father == 0 ~ 0, #condition 1
+    Mother == 0 & Father == 1 ~ 1, #condition 2
+    Mother == 1 & Father == 0 ~ 2, #condition 3
+    Mother == 1 & Father == 1 ~ 3 #condition 4
+    )
+)#all other cases
+
+df
+```
+
+#### Explicitly dealing with missing values:
+
+In the case above, we did not account for any other combinations, such as either 'Mother' or 'Father' being missing.  We let the unhandled combinations default to missing.
+
+Here, we explicitely declare that:
+
+
+
+```{r case_when2}
+
+df <- df %>% 
+  mutate(new_variable = case_when(
+    Mother == 0 & Father == 0 ~ 0, #condition 1
+    Mother == 0 & Father == 1 ~ 1, #condition 2
+    Mother == 1 & Father == 0 ~ 2, #condition 3
+    Mother == 1 & Father == 1 ~ 3, #condition 4
+    TRUE~ NA_real_                      #all other cases
+    )
+)
+
+df
+
+```
+
+
+## References:
+This code was borrowed from: https://stackoverflow.com/posts/60086150/revisions  <p>
+Example of case_when:  https://www.rdocumentation.org/packages/dplyr/versions/0.7.8/topics/case_when  <p>
+Documentation of case_when in tidyverse.org:
+https://dplyr.tidyverse.org/reference/case_when.html  <p>
+Documentation of dplyr  in tidyverse.org: 
+https://dplyr.tidyverse.org/index.html <p>
+
+
