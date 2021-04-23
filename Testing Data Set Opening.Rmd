@@ -1,0 +1,59 @@
+---
+title: "Testing Data Set Opening"
+author: "Barry DeCicco"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load_libraries}
+library(tidyverse)
+library(magrittr)
+library(here)
+```
+#### Create a data set and name it 'df':
+
+```{r create_data}
+Mother <- c(0,0,0,1,1,NA)
+Father <- c(0,1,1,0,0,1)
+df <- data.frame(Mother, Father)
+df
+str(df) #both Mother and Father columns are numeric
+
+```
+
+#### Demonstrate that we can print something:
+
+The mean value of 'Father' is:  `r mean(df$Father)`
+
+#### Save the data set to the hard drive as '...Data/df.Rdata':
+
+```{r save_data}
+saveRDS(df, file="Data/df.Rdata", compress = F)
+
+```
+
+#### delete the data set from memory - it still exists on the hard drive, but is no longer loaded:
+
+```{r delete_data}
+
+rm(df)
+
+```
+
+#### Demonstrate that the data set 'df' is no longer available:
+
+(the stuff being printed out is R telling us how to use 'str()'; it assumes that we are ignorant)
+
+```{r test_delete_data}
+
+str(df)
+
+```
+One source:  https://rcrastinate.rbind.io/post/how-to-save-and-load-data-in-r-an-overview/
+
+
