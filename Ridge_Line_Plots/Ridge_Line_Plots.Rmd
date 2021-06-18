@@ -1,0 +1,187 @@
+---
+title: "ridge_line_plots"
+author: "Barry DeCicco"
+date: "6/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ridgeline Plots:
+
+(from:  https://statisticsglobe.com/ridgeline-plots-in-r)
+ 
+
+This tutorial demonstrates how to create a ridgeline plot in the R programming language.
+
+Please note that this tutorial was written in collaboration with Adrián Álvarez Molina. You find more information about him at the end of this page.
+
+
+
+
+```{r load_libraries, include=FALSE, echo=FALSE, eval=TRUE}
+
+library(ggridges)
+library(magrittr)
+library(tidyverse)
+
+
+
+```
+
+
+#### Example Data:
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r create_datainclude=FALSE, echo=TRUE, eval=TRUE, }
+
+
+set.seed(1992)                                       # Set seed for reproducibility
+example <- data.frame(day = 0, month = 0, temperature = 0)  # Create empty data
+ 
+months_averages <- c(10, 11, 14, 18, 23, 26, 29, 32, 25 ,18, 14, 6)
+months_sd <- c(3, 3, 4, 6, 7, 8, 5, 5, 4, 7, 4, 3)
+ 
+for(i in 1:12) {                                     # Fill up data with random numbers
+  example[(i*30 - 29):(i*30), "day"] <- 
+    1:30
+  example[(i*30 - 29):(i*30), "month"] <- 
+    month.name[i]
+  example[(i*30 - 29):(i*30), "temperature"] <-
+    rnorm(n = 30, 
+          mean = months_averages[i],
+          sd = months_sd[i]) %>%
+    round()
+}
+ 
+example$month <-                                     # Convert month variable into a factor
+  example$month %>% 
+  as_factor()
+ 
+head(example)
+```
+
+## Alternatives to Ridgeline Plots
+
+The typical alternative to ridgeline plots would be histograms. We could create an overlaid ggplot2 histogram of our example data using the following lines of code:
+
+```{r histogram, include=TRUE, echo=TRUE, eval=TRUE}
+
+histogram <-                                         # Draw histogram
+  example %>%
+  ggplot(aes( x = temperature, fill = month)) +
+  geom_histogram( alpha = 0.6)
+histogram
+
+
+```
+
+
+#### Faceted Histograms:
+
+Figure 1 shows the output of the previous R syntax. All the histograms were drawn together, what a mess!
+
+Another alternative would be a facet plot where we facet against months to see every histogram in a separate panel:
+
+
+```{r faceted_histogram, include=TRUE, echo=TRUE, eval=TRUE}
+
+faceted_histogram <-                                 # Draw facet plot
+  histogram +
+  facet_wrap(~ month, nrow = 4)
+faceted_histogram
+
+ 
+
+```
+Figure 2 shows our data in a facet plot. This already looks much better. However, an even cleaner way to visualize our data would be ridgeline plots.
+
+We’ll draw such graphs in the next sections – so keep on reading!
+
+#### Example 1: Drawing Ridgeline Plot of Histograms:
+
+If we want to create ridgeline graphics in R, we first have to install and load the ggridges package:
+
+
+```{r package_ggridges, include=TRUE, echo=TRUE, eval=FALSE}
+
+# install.packages("ggridges")   # already installed
+# library("ggridges")            # 
+
+```
+
+We can now use the geom_density_ridges function to draw the histograms in a ridgeline chart. In our plot, the x aesthetic will be the temperature. The y aesthetic will be the months, since we want to have each month separated.
+
+```{r ridge_histogram_plot, include=TRUE, echo=TRUE, eval=TRUE}
+
+ridge_histogram_plot <-                              # Draw histograms in ridgeline plot
+  example %>%
+  ggplot(aes(x = temperature , y = month,  fill = month)) +
+  ggridges::geom_density_ridges(scale = 1,           # Overlap among histograms
+                                stat = "binline")
+ridge_histogram_plot
+
+```
+
+
+#### Example 2: Drawing Ridgeline Plot of Densities
+
+We can also make density plots instead of histograms by removing stat = “binline” within the geom_density_ridges function:
+
+
+```{r ridge_density_plot, include=TRUE, echo=TRUE, eval=TRUE}
+
+ridge_density_plot <-           # Draw densities in ridgeline plot
+  example %>%
+  ggplot(aes(x = temperature , y = month,  fill = month)) +
+  ggridges::geom_density_ridges(scale = 1)           # Overlap among histograms
+ridge_density_plot
+
+```
+
+
+As you can see in Figure 4, our histograms were replaced by densities.
+
+
+#### Example 3: Modifying the Groups in Ridgeline Plots
+
+We can also use ridgeline charts to draw the same group (i.e. seasons instead of months) over several lines in our graphic.
+
+For this, we first have to add another variable to our data, which converts our month variable into seasons:
+
+
+
+```{r add_seasons, include=TRUE, echo=TRUE, eval=TRUE}
+
+example$season <-        # Add seasons to better see the group of months
+  case_when(example$month %in% month.name[c(12, 1, 2)] ~ "Winter",
+            example$month %in% month.name[c(3:5)] ~ "Spring",
+            example$month %in% month.name[c(6:8)] ~ "Summer",
+            example$month %in% month.name[c(9:11)] ~ "Autumn" ) %>%
+  as_factor()
+head(example)
+
+```
+
+
+```{r ridge_histogram_by_season, include=TRUE, echo=TRUE, eval=TRUE}
+
+ridge_histogram_by_season <-                         # Ridgeline plot with seasons
+  example %>%
+  ggplot(aes(x = temperature , y = month,  fill = season)) +
+  ggridges::geom_density_ridges(scale = 1,           # Overlap among histograms
+                                stat = "binline") +  # Draw histograms
+  scale_fill_manual(values = c("cyan3",
+                               "khaki2",
+                               "tomato2",
+                               "skyblue2"))
+ridge_histogram_by_season
+
+```
+
+Figure 5 shows our final plot with colors corresponding to the seasons of the year. Note that the histograms shown in this ridgeline plot are the same as in Figure 3.
